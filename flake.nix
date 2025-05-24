@@ -14,8 +14,11 @@
           pkgs.mkShell rec {
             packages = with pkgs; [
               nim
-              nimlsp
+              nimlangserver
+              nimble
+              nph
             ];
           });
     };
 }
+
