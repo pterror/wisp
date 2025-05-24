@@ -18,6 +18,12 @@
               nimble
               nph
             ];
+            buildInputs = with pkgs; [
+              sqlite
+            ];
+            shellHook = ''
+              export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath buildInputs}:$LD_LIBRARY_PATH"
+            '';
           });
     };
 }
