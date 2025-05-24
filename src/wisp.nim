@@ -1,3 +1,5 @@
+import std/options
+
 import debby/sqlite
 
 import chat

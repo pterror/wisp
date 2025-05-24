@@ -1,7 +1,10 @@
 import std/macros
+import std/options
 
 type
   Url* = distinct string
+  ChatUserRoleId* = distinct int
+  ChatServerUserId* = distinct int
   ChatUserId* = distinct int
   ChatMessageId* = distinct int
   ChatChannelId* = distinct int
@@ -9,59 +12,43 @@ type
   ChatRoleId* = distinct int
 
   ChatUserRole* = ref object
-    id: int
+    id*: ChatUserRoleId
     userId*: ChatUserId
     roleId*: ChatRoleId
 
   ChatUser* = ref object
-    id: int
+    id*: ChatUserId
     name*: string
-    icon*: Url
+    icon*: Option[Url]
 
   ChatServerUser* = ref object
-    id: int
+    id*: ChatServerUserId
+    userId: ChatUserId
+    serverId*: ChatServerId
     nickname*: string
 
   ChatMessage* = ref object
-    id: int
+    id*: ChatMessageId
     authorId*: ChatUserId
     channelId*: ChatChannelId
     content*: string
 
   ChatChannel* = ref object
-    id: int
+    id*: ChatChannelId
     serverId*: ChatServerId
     name*: string
-    icon*: Url
+    icon*: Option[Url]
 
   ChatServer* = ref object
-    id: int
+    id*: ChatServerId
     name*: string
-    icon*: Url
+    icon*: Option[Url]
 
   ChatRole* = ref object
-    id: int
+    id*: ChatRoleId
     roleId*: ChatRoleId
     name*: string
-    icon*: Url
-
-func userId*(user: ChatUser): ChatUserId =
-  ChatUserId(user.id)
-
-func userId*(user: ChatServerUser): ChatUserId =
-  ChatUserId(user.id)
-
-func messageId*(message: ChatMessage): ChatMessageId =
-  ChatMessageId(message.id)
-
-func channelId*(channel: ChatChannel): ChatChannelId =
-  ChatChannelId(channel.id)
-
-func serverId*(server: ChatServer): ChatServerId =
-  ChatServerId(server.id)
-
-func roleId*(role: ChatRole): ChatRoleId =
-  ChatRoleId(role.id)
+    icon*: Option[Url]
 
 macro registerChatTypes*(register) =
   quote:
