@@ -1,3 +1,5 @@
+import chat
+
 proc main() =
   echo "hi"
 
