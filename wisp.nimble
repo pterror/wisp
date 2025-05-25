@@ -11,4 +11,4 @@ bin = @["wisp"]
 # Dependencies
 
 requires "nim >= 2.2.4"
-requires "https://github.com/pterror/debby#5b6562f5c9a413ab0c80b0b74a50dd7a66f94fba"
+requires "https://github.com/pterror/debby#716546fd4673c5bb0d206d8f3461e09027360aa5"

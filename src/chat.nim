@@ -1,16 +1,17 @@
-import std/macros
-import std/options
+import std/json, std/macros, std/options
+import newtype
+
+idType ChatUserRoleId
+idType ChatServerUserId
+idType ChatUserId
+idType ChatMessageId
+idType ChatChannelId
+idType ChatServerId
+idType ChatRoleId
+
+stringType Url
 
 type
-  Url* = distinct string
-  ChatUserRoleId* = distinct int
-  ChatServerUserId* = distinct int
-  ChatUserId* = distinct int
-  ChatMessageId* = distinct int
-  ChatChannelId* = distinct int
-  ChatServerId* = distinct int
-  ChatRoleId* = distinct int
-
   ChatUserRole* = ref object
     id*: ChatUserRoleId
     userId*: ChatUserId
