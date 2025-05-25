@@ -13,7 +13,17 @@ proc main*() {.async.} =
     let parts = req.url.path.split('/')
     let handler = serverHandlers.getOrDefault(parts[1])
     if handler != nil:
-      await handler(req)
+      var newReq = Request(
+        client: req.client,
+        reqMethod: req.reqMethod,
+        headers: req.headers,
+        protocol: req.protocol,
+        url: req.url,
+        hostname: req.hostname,
+        body: req.body,
+      )
+      newReq.url.path = "/" & parts[2 ..^ 1].join("/")
+      await handler(newReq)
     else:
       let headers = {"Content-Type": "application/json"}
       await req.respond(

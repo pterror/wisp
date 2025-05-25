@@ -33,6 +33,18 @@ proc httpCrud*[T: ref object](
         let result = db.get(t, id)
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
         await req.respond(Http200, $(%*result), headers)
+      of HttpPut:
+        # FIXME: exception handling (should not crash on invalid input)
+        # TODO: allow partial updates (most importantly, when missing `id`)
+        var value = parseJson(req.body).to(T)
+        if value.id.int != 0 and value.id != id:
+          let headers = {"Content-Type": "application/json"}.newHttpHeaders()
+          await req.respond(Http400, """{"error":"Id mismatch"}""", headers)
+          return
+        value.id = id
+        db.update(value)
+        let headers = {"Content-Type": "application/json"}.newHttpHeaders()
+        await req.respond(Http200, "null", headers)
       else:
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
         await req.respond(
