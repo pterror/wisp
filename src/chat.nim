@@ -5,7 +5,7 @@ stringType Url
 
 dbTypes(Chat):
   type
-    User* = ref object
+    Entity* = ref object
       name*: string
       icon*: Option[Url]
 
@@ -19,7 +19,7 @@ dbTypes(Chat):
       icon*: Option[Url]
 
     Message* = ref object
-      authorId*: UserId
+      authorId*: EntityId
       channelId*: ChannelId
       content*: string
 
@@ -28,11 +28,11 @@ dbTypes(Chat):
       name*: string
       icon*: Option[Url]
 
-    ServerUser* = ref object
-      userId*: UserId
+    ServerEntity* = ref object
+      entityId*: EntityId
       serverId*: ServerId
       nickname*: string
 
-    UserRole* = ref object
-      userId*: UserId
+    EntityRole* = ref object
+      entityId*: EntityId
       roleId*: RoleId
