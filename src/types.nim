@@ -40,6 +40,7 @@ macro stringType*(name: untyped) =
 #   foo*: string
 #   bar*: int
 macro dbTypes*(typs: untyped) =
+  var stmts: seq[NimNode] = @[]
   var types: seq[NimNode] = @[]
   for section in typs:
     section.expectKind nnkTypeSection
@@ -57,27 +58,27 @@ macro dbTypes*(typs: untyped) =
       let obj = refTy[0]
       obj.expectKind nnkObjectTy
       let id = ident(name.strVal & "Id")
-      let typeSection = nnkTypeSection.newTree(
-        nnkTypeDef.newTree(
-          typ[0], # name
-          typ[1], # generic params
-          nnkRefTy.newTree(
-            nnkObjectTy.newTree(
-              obj[0], # pragmas
-              obj[1], # inherits from
-              nnkRecList.newTree( # fields
-                newIdentDefs(nnkPostfix.newTree(ident("*"), ident("id")), id),
-                obj[2], # other fields
-              ),
-            )
-          ),
-        )
+      let typeDef = nnkTypeDef.newTree(
+        typ[0], # name
+        typ[1], # generic params
+        nnkRefTy.newTree(
+          nnkObjectTy.newTree(
+            obj[0], # pragmas
+            obj[1], # inherits from
+            nnkRecList.newTree( # fields
+              newIdentDefs(nnkPostfix.newTree(ident("*"), ident("id")), id),
+              obj[2], # other fields
+            ),
+          )
+        ),
       )
-      let syn = quote:
+      let idStmt = quote:
         idType `id`
-        `typeSection`
-      types.add(syn)
-  result = nnkStmtList.newTree(types)
+      stmts.add(idStmt)
+      types.add(typeDef)
+  stmts.add(nnkTypeSection.newTree(types))
+  result = nnkStmtList.newTree(stmts)
+
   if defined(debugMacros):
     echo "(dbTypes macro)"
     echo result.repr
