@@ -1,62 +1,48 @@
 import std/json, std/macros, std/options
-import newtype
-
-idType ChatUserRoleId
-idType ChatServerUserId
-idType ChatUserId
-idType ChatMessageId
-idType ChatChannelId
-idType ChatServerId
-idType ChatRoleId
+import types
 
 stringType Url
 
-type
-  ChatUserRole* = ref object
-    id*: ChatUserRoleId
-    userId*: ChatUserId
-    roleId*: ChatRoleId
-
-  ChatUser* = ref object
-    id*: ChatUserId
+dbTypes:
+  type ChatUser* = ref object
     name*: string
     icon*: Option[Url]
 
-  ChatServerUser* = ref object
-    id*: ChatServerUserId
-    userId: ChatUserId
-    serverId*: ChatServerId
-    nickname*: string
+  type ChatServer* = ref object
+    name*: string
+    icon*: Option[Url]
 
-  ChatMessage* = ref object
-    id*: ChatMessageId
+  type ChatChannel* = ref object
+    serverId*: ChatServerId
+    name*: string
+    icon*: Option[Url]
+
+  type ChatMessage* = ref object
     authorId*: ChatUserId
     channelId*: ChatChannelId
     content*: string
 
-  ChatChannel* = ref object
-    id*: ChatChannelId
+  type ChatRole* = ref object
     serverId*: ChatServerId
     name*: string
     icon*: Option[Url]
 
-  ChatServer* = ref object
-    id*: ChatServerId
-    name*: string
-    icon*: Option[Url]
+  type ChatServerUser* = ref object
+    userId: ChatUserId
+    serverId*: ChatServerId
+    nickname*: string
 
-  ChatRole* = ref object
-    id*: ChatRoleId
+  type ChatUserRole* = ref object
+    userId*: ChatUserId
     roleId*: ChatRoleId
-    name*: string
-    icon*: Option[Url]
 
+# FIXME: add to `dbTypes` macro
 macro registerChatTypes*(register) =
   quote:
-    `register`(ChatUserRole)
     `register`(ChatUser)
-    `register`(ChatServerUser)
-    `register`(ChatMessage)
-    `register`(ChatChannel)
     `register`(ChatServer)
+    `register`(ChatChannel)
+    `register`(ChatMessage)
     `register`(ChatRole)
+    `register`(ChatServerUser)
+    `register`(ChatUserRole)
