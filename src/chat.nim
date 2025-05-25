@@ -3,7 +3,7 @@ import types
 
 stringType Url
 
-dbTypes:
+dbTypes(Chat):
   type
     ChatUser* = ref object
       name*: string
@@ -29,21 +29,10 @@ dbTypes:
       icon*: Option[Url]
 
     ChatServerUser* = ref object
-      userId: ChatUserId
+      userId*: ChatUserId
       serverId*: ChatServerId
       nickname*: string
 
     ChatUserRole* = ref object
       userId*: ChatUserId
       roleId*: ChatRoleId
-
-# FIXME: add to `dbTypes` macro
-macro registerChatTypes*(register) =
-  quote:
-    `register`(ChatUser)
-    `register`(ChatServer)
-    `register`(ChatChannel)
-    `register`(ChatMessage)
-    `register`(ChatRole)
-    `register`(ChatServerUser)
-    `register`(ChatUserRole)

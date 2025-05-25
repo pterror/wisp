@@ -1,7 +1,7 @@
 import std/json, std/macros
 
 # define `type Foo* = distinct int` and associated `%` operator
-macro idType*(name: untyped) =
+macro idType*(name) =
   name.expectKind nnkIdent
   result = quote("@"):
     type `@ name`* = distinct int
@@ -13,7 +13,7 @@ macro idType*(name: untyped) =
     echo result.repr
 
 # define `type Foo* = distinct string` and associated `%` operator
-macro stringType*(name: untyped) =
+macro stringType*(name) =
   name.expectKind nnkIdent
   result = quote("@"):
     type `@ name`* = distinct string
@@ -27,7 +27,7 @@ macro stringType*(name: untyped) =
 # define `type FooId* = distinct int` and inject as first field to `type Foo`
 # supports declaring multiple types per `dbType` invocation.
 #
-# dbType:
+# dbTypes(Fizz):
 #   type Foo* = ref object
 #     foo*: string
 #     bar*: int
@@ -39,9 +39,13 @@ macro stringType*(name: untyped) =
 #   id*: FooId
 #   foo*: string
 #   bar*: int
-macro dbTypes*(typs: untyped) =
+# macro registerFizzTypes*(register) =
+#   `register`(Foo)
+macro dbTypes*(groupName, typs) =
+  groupName.expectKind nnkIdent
   var stmts: seq[NimNode] = @[]
   var types: seq[NimNode] = @[]
+  var registerStmts: seq[NimNode] = @[]
   for section in typs:
     section.expectKind nnkTypeSection
     for typ in section:
@@ -66,8 +70,7 @@ macro dbTypes*(typs: untyped) =
             obj[0], # pragmas
             obj[1], # inherits from
             nnkRecList.newTree( # fields
-              newIdentDefs(nnkPostfix.newTree(ident("*"), ident("id")), id),
-              obj[2], # other fields
+              newIdentDefs(postfix(ident("id"), "*"), id), obj[2] # other fields
             ),
           )
         ),
@@ -76,7 +79,24 @@ macro dbTypes*(typs: untyped) =
         idType `id`
       stmts.add(idStmt)
       types.add(typeDef)
+      let registerStmt = quote("@"):
+        `register`(`@ name`)
+      registerStmts.add(registerStmt)
   stmts.add(nnkTypeSection.newTree(types))
+  stmts.add(
+    nnkMacroDef.newTree(
+      postfix(ident("register" & groupName.strVal & "Types"), "*"),
+      newEmptyNode(), # {}
+      newEmptyNode(), # [] generic params
+      nnkFormalParams.newTree( # () params
+        newEmptyNode(),
+        nnkIdentDefs.newTree(ident("register"), newEmptyNode(), newEmptyNode()),
+      ),
+      newEmptyNode(),
+      newEmptyNode(),
+      newCall(ident("quote"), nnkStmtList.newTree(registerStmts)),
+    )
+  )
   result = nnkStmtList.newTree(stmts)
 
   if defined(debugMacros):

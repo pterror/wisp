@@ -29,6 +29,7 @@ proc main*() {.async.} =
 
   registerChatTypes(register)
 
+  server.listen(Port(8080))
   while true:
     if server.shouldAcceptRequest():
       await server.acceptRequest(serverCb)
