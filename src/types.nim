@@ -7,8 +7,9 @@ macro idType*(name: untyped) =
     type `@ name`* = distinct int
     proc `%`*(n: `@ name`): JsonNode =
       %n.int
-  if defined(DEBUG_MACROS):
-    echo "idType macro:"
+
+  if defined(debugMacros):
+    echo "(idType macro)"
     echo result.repr
 
 # define `type Foo* = distinct string` and associated `%` operator
@@ -18,8 +19,9 @@ macro stringType*(name: untyped) =
     type `@ name`* = distinct string
     proc `%`*(u: `@ name`): JsonNode =
       %u.string
-  if defined(DEBUG_MACROS):
-    echo "stringType macro:"
+
+  if defined(debugMacros):
+    echo "(stringType macro)"
     echo result.repr
 
 # define `type FooId* = distinct int` and inject as first field to `type Foo`
@@ -41,41 +43,41 @@ macro dbTypes*(typs: untyped) =
   var types: seq[NimNode] = @[]
   for section in typs:
     section.expectKind nnkTypeSection
-    let typ = section[0]
-    typ.expectKind nnkTypeDef
-    let name =
-      if typ[0].kind == nnkIdent:
-        typ[0]
-      else:
-        typ[0].expectKind nnkPostfix
-        typ[0][1]
-    name.expectKind nnkIdent
-    let refTy = typ[2]
-    refTy.expectKind nnkRefTy
-    let obj = refTy[0]
-    obj.expectKind nnkObjectTy
-    let id = ident(name.strVal & "Id")
-    let typeSection = nnkTypeSection.newTree(
-      nnkTypeDef.newTree(
-        typ[0], # name
-        typ[1], # generic params
-        nnkRefTy.newTree(
-          nnkObjectTy.newTree(
-            obj[0], # pragmas
-            obj[1], # inherits from
-            nnkRecList.newTree( # fields
-              newIdentDefs(nnkPostfix.newTree(ident("*"), ident("id")), id),
-              obj[2], # other fields
-            ),
-          )
-        ),
+    for typ in section:
+      typ.expectKind nnkTypeDef
+      let name =
+        if typ[0].kind == nnkIdent:
+          typ[0]
+        else:
+          typ[0].expectKind nnkPostfix
+          typ[0][1]
+      name.expectKind nnkIdent
+      let refTy = typ[2]
+      refTy.expectKind nnkRefTy
+      let obj = refTy[0]
+      obj.expectKind nnkObjectTy
+      let id = ident(name.strVal & "Id")
+      let typeSection = nnkTypeSection.newTree(
+        nnkTypeDef.newTree(
+          typ[0], # name
+          typ[1], # generic params
+          nnkRefTy.newTree(
+            nnkObjectTy.newTree(
+              obj[0], # pragmas
+              obj[1], # inherits from
+              nnkRecList.newTree( # fields
+                newIdentDefs(nnkPostfix.newTree(ident("*"), ident("id")), id),
+                obj[2], # other fields
+              ),
+            )
+          ),
+        )
       )
-    )
-    let syn = quote:
-      idType `id`
-      `typeSection`
-    types.add(syn)
+      let syn = quote:
+        idType `id`
+        `typeSection`
+      types.add(syn)
   result = nnkStmtList.newTree(types)
-  if defined(DEBUG_MACROS):
-    echo "dbTypes macro:"
+  if defined(debugMacros):
+    echo "(dbTypes macro)"
     echo result.repr

@@ -4,37 +4,38 @@ import types
 stringType Url
 
 dbTypes:
-  type ChatUser* = ref object
-    name*: string
-    icon*: Option[Url]
+  type
+    ChatUser* = ref object
+      name*: string
+      icon*: Option[Url]
 
-  type ChatServer* = ref object
-    name*: string
-    icon*: Option[Url]
+    ChatServer* = ref object
+      name*: string
+      icon*: Option[Url]
 
-  type ChatChannel* = ref object
-    serverId*: ChatServerId
-    name*: string
-    icon*: Option[Url]
+    ChatChannel* = ref object
+      serverId*: ChatServerId
+      name*: string
+      icon*: Option[Url]
 
-  type ChatMessage* = ref object
-    authorId*: ChatUserId
-    channelId*: ChatChannelId
-    content*: string
+    ChatMessage* = ref object
+      authorId*: ChatUserId
+      channelId*: ChatChannelId
+      content*: string
 
-  type ChatRole* = ref object
-    serverId*: ChatServerId
-    name*: string
-    icon*: Option[Url]
+    ChatRole* = ref object
+      serverId*: ChatServerId
+      name*: string
+      icon*: Option[Url]
 
-  type ChatServerUser* = ref object
-    userId: ChatUserId
-    serverId*: ChatServerId
-    nickname*: string
+    ChatServerUser* = ref object
+      userId: ChatUserId
+      serverId*: ChatServerId
+      nickname*: string
 
-  type ChatUserRole* = ref object
-    userId*: ChatUserId
-    roleId*: ChatRoleId
+    ChatUserRole* = ref object
+      userId*: ChatUserId
+      roleId*: ChatRoleId
 
 # FIXME: add to `dbTypes` macro
 macro registerChatTypes*(register) =
