@@ -5,34 +5,34 @@ stringType Url
 
 dbTypes(Chat):
   type
-    ChatUser* = ref object
+    User* = ref object
       name*: string
       icon*: Option[Url]
 
-    ChatServer* = ref object
+    Server* = ref object
       name*: string
       icon*: Option[Url]
 
-    ChatChannel* = ref object
-      serverId*: ChatServerId
+    Channel* = ref object
+      serverId*: ServerId
       name*: string
       icon*: Option[Url]
 
-    ChatMessage* = ref object
-      authorId*: ChatUserId
-      channelId*: ChatChannelId
+    Message* = ref object
+      authorId*: UserId
+      channelId*: ChannelId
       content*: string
 
-    ChatRole* = ref object
-      serverId*: ChatServerId
+    Role* = ref object
+      serverId*: ServerId
       name*: string
       icon*: Option[Url]
 
-    ChatServerUser* = ref object
-      userId*: ChatUserId
-      serverId*: ChatServerId
+    ServerUser* = ref object
+      userId*: UserId
+      serverId*: ServerId
       nickname*: string
 
-    ChatUserRole* = ref object
-      userId*: ChatUserId
-      roleId*: ChatRoleId
+    UserRole* = ref object
+      userId*: UserId
+      roleId*: RoleId

@@ -11,7 +11,7 @@ proc main*() {.async.} =
 
   proc serverCb(req: Request) {.async, gcsafe.} =
     let parts = req.url.path.split('/')
-    let handler = serverHandlers.getOrDefault(parts[0])
+    let handler = serverHandlers.getOrDefault(parts[1])
     if handler != nil:
       await handler(req)
     else:
@@ -25,6 +25,7 @@ proc main*() {.async.} =
   proc register[T: ref object](t: typedesc[T]) =
     if not db.tableExists(t):
       db.createTable(t)
+    db.checkTable(t)
     serverHandlers[($type(t)).toSnakeCase()] = httpCrud(t, db)
 
   registerChatTypes(register)
