@@ -7,6 +7,7 @@ macro idType*(name) =
     type `@ name`* = distinct int
     proc `%`*(n: `@ name`): JsonNode =
       %n.int
+    proc `==`*(a, b: `@ name`): bool {.borrow.}
 
   if defined(debugMacros):
     echo "(idType macro)"
@@ -19,6 +20,7 @@ macro stringType*(name) =
     type `@ name`* = distinct string
     proc `%`*(u: `@ name`): JsonNode =
       %u.string
+    proc `==`*(a, b: `@ name`): bool {.borrow.}
 
   if defined(debugMacros):
     echo "(stringType macro)"
