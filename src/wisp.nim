@@ -1,6 +1,6 @@
 import std/asynchttpserver, std/asyncdispatch, std/json, std/strutils, std/tables
 import debby/sqlite
-import chat, http
+import chat, http, typeobj
 
 proc main*() {.async.} =
   let db = openDatabase("chat.db")
@@ -48,4 +48,5 @@ proc main*() {.async.} =
       await sleepAsync(10)
 
 if isMainModule:
+  echo $typeobjof(Server)
   waitFor main()

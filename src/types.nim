@@ -5,6 +5,8 @@ macro idType*(name) =
   name.expectKind nnkIdent
   result = quote("@"):
     type `@ name`* = distinct int
+    proc `$`*(n: `@ name`): string =
+      $`@ name` & "(" & $n.int & ")"
     proc `%`*(n: `@ name`): JsonNode =
       %n.int
     proc `==`*(a, b: `@ name`): bool {.borrow.}
@@ -18,8 +20,10 @@ macro stringType*(name) =
   name.expectKind nnkIdent
   result = quote("@"):
     type `@ name`* = distinct string
-    proc `%`*(u: `@ name`): JsonNode =
-      %u.string
+    proc `$`*(n: `@ name`): string =
+      $`@ name` & "(" & $n.string & ")"
+    proc `%`*(n: `@ name`): JsonNode =
+      %n.string
     proc `==`*(a, b: `@ name`): bool {.borrow.}
 
   if defined(debugMacros):
