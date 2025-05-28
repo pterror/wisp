@@ -1,4 +1,4 @@
-import std/json, std/macros
+import std/macros
 
 # define `type Foo* = distinct int` and associated `%` operator
 macro idType*(name) =
@@ -7,8 +7,6 @@ macro idType*(name) =
     type `@ name`* = distinct int
     proc `$`*(n: `@ name`): string =
       $`@ name` & "(" & $n.int & ")"
-    proc `%`*(n: `@ name`): JsonNode =
-      %n.int
     proc `==`*(a, b: `@ name`): bool {.borrow.}
 
   if defined(debugMacros):
@@ -22,8 +20,6 @@ macro stringType*(name) =
     type `@ name`* = distinct string
     proc `$`*(n: `@ name`): string =
       $`@ name` & "(" & $n.string & ")"
-    proc `%`*(n: `@ name`): JsonNode =
-      %n.string
     proc `==`*(a, b: `@ name`): bool {.borrow.}
 
   if defined(debugMacros):

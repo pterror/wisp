@@ -1,5 +1,6 @@
-import std/asyncdispatch, std/asynchttpserver, std/json, std/strutils
+import std/asyncdispatch, std/asynchttpserver, std/strutils
 import debby/sqlite
+import jsony
 
 proc httpCrud*[T: ref object](
     t: typedesc[T], db: Db
@@ -9,7 +10,7 @@ proc httpCrud*[T: ref object](
       case req.reqMethod
       of HttpPost:
         # new object
-        db.insert(parseJson(req.body).to(T))
+        db.insert(req.body.fromJson(T))
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
         await req.respond(Http200, "null", headers)
       of HttpGet:
@@ -17,7 +18,7 @@ proc httpCrud*[T: ref object](
         # list objects
         let result = db.filter(t)
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
-        await req.respond(Http200, $(%*result), headers)
+        await req.respond(Http200, result.toJson(), headers)
       else:
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
         await req.respond(
@@ -32,11 +33,11 @@ proc httpCrud*[T: ref object](
       of HttpGet:
         let result = db.get(t, id)
         let headers = {"Content-Type": "application/json"}.newHttpHeaders()
-        await req.respond(Http200, $(%*result), headers)
+        await req.respond(Http200, result.toJson(), headers)
       of HttpPut:
         # FIXME: exception handling (should not crash on invalid input)
         # TODO: allow partial updates (most importantly, when missing `id`)
-        var value = parseJson(req.body).to(T)
+        var value = req.body.fromJson(T)
         if value.id.int != 0 and value.id != id:
           let headers = {"Content-Type": "application/json"}.newHttpHeaders()
           await req.respond(Http400, """{"error":"Id mismatch"}""", headers)
