@@ -25,12 +25,7 @@ proc main*() {.async.} =
       newReq.url.path = "/" & parts[2 ..^ 1].join("/")
       await handler(newReq)
     else:
-      let headers = {"Content-Type": "application/json"}
-      await req.respond(
-        Http404,
-        $(%*{"error": "Path '" & req.url.path & "' not found"}),
-        headers.newHttpHeaders(),
-      )
+      await req.httpErrorJson("Path '" & req.url.path & "' not found")
 
   proc register[T: ref object](t: typedesc[T]) =
     if not db.tableExists(t):
