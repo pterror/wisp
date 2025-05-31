@@ -24,10 +24,10 @@ proc httpCrud*[T: ref object](
         db.insert(req.body.fromJson(T))
         await req.httpOkJson(nil)
       of HttpGet:
-        # TODO: read query params from URL search params
         # list objects
-        let result = db.filter(t)
-        await req.httpOkJson(result)
+        # TODO: read query params from URL search params
+        let output = db.filter(t)
+        await req.httpOkJson(output)
       else:
         await req.httpErrorJson("Unsupported method '" & $req.reqMethod & "'")
     else:
@@ -35,17 +35,24 @@ proc httpCrud*[T: ref object](
       let id = typeof(obj.id)(req.url.path[1 ..^ 1].parseInt)
       case req.reqMethod
       of HttpGet:
-        let result = db.get(t, id)
-        await req.httpOkJson(result)
+        # get object
+        let output = db.get(t, id)
+        await req.httpOkJson(output)
       of HttpPut:
-        # FIXME: exception handling (should not crash on invalid input)
-        # TODO: allow partial updates (most importantly, when missing `id`)
+        # update object
         var value = req.body.fromJson(T)
         if value.id.int != 0 and value.id != id:
-          await req.httpErrorJson("Id mismatch")
+          await req.httpErrorJson("Object id must be '" & $id & "'")
           return
         value.id = id
         db.update(value)
+        await req.httpOkJson(nil)
+      of HttpDelete:
+        # delete object
+        let affectedRows = db.delete(t, id)
+        if affectedRows <= 0:
+          await req.httpErrorJson("Object with id '" & $id & "' not found")
+          return
         await req.httpOkJson(nil)
       else:
         await req.httpErrorJson("Unsupported method '" & $req.reqMethod & "'")

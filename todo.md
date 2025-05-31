@@ -1,3 +1,5 @@
 - typeobj to json schema
 - typeobj to validator
   - type to validator
+- permissions for http crud
+- auth for http crud
