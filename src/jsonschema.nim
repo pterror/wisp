@@ -20,6 +20,8 @@ type
     jskNot
 
   JsonSchema* = object
+    unevaluatedProperties*: Option[JsonSchemaOrFalse]
+    unevaluatedItems*: Option[JsonSchemaOrFalse]
     # FIXME: `type` conflicts with the (deprecated) operator's name - but this is difficult
     # to change without support for parse-side `renameHook` (which can be implemented!).
     case `type`*: JsonSchemaKind
@@ -34,13 +36,22 @@ type
       maxLength*: Option[int]
       pattern*: Option[string]
     of jskArray:
-      items*: Option[ref JsonSchema]
+      items*: Option[JsonSchemaOrFalse]
       prefixItems*: Option[seq[JsonSchema]]
-      unevaluatedItems*: Option[bool]
+      contains*: Option[ref JsonSchema]
+      minContains*: Option[int]
+      maxContains*: Option[int]
+      minItems*: Option[int]
+      maxItems*: Option[int]
+      uniqueItems*: Option[bool]
     of jskObject:
       properties*: Option[Table[string, JsonSchema]]
       patternProperties*: Option[Table[string, JsonSchema]]
-      additionalProperties*: Option[JsonSchemaAdditionalProperties]
+      additionalProperties*: Option[JsonSchemaOrFalse]
+      propertyNames*: Option[ref JsonSchema]
+      required*: Option[seq[string]]
+      minProperties*: Option[int]
+      maxProperties*: Option[int]
     of jskEnum:
       `enum`*: seq[JsonValue]
     of jskConst:
@@ -56,8 +67,17 @@ type
     else:
       discard
   
-  JsonSchemaAdditionalProperties = object
-    properties: ref JsonSchema
+  JsonSchemaOrFalse = object
+    isFalse: bool
+    schema: ref JsonSchema
+
+func falseJsf*(): JsonSchemaOrFalse =
+  JsonSchemaOrFalse(isFalse: true)
+
+func newJsf*(schema: JsonSchema): JsonSchemaOrFalse =
+  let newSchema = new JsonSchema
+  newSchema[] = schema
+  JsonSchemaOrFalse(schema: newSchema)
 
 func skipHook*[U: Option[auto]](T: typedesc[JsonSchema], v: U, key: string): bool =
   v.isNone
@@ -98,23 +118,21 @@ func toJsonSchema*(typeobj: TypeObj): JsonSchema =
     let prefixItems = typeobj.items.map(
       proc (item: TypeObj): JsonSchema = item.toJsonSchema
     ).some
-    JsonSchema(type: jskArray, prefixItems: prefixItems, unevaluatedItems: false.some)
+    JsonSchema(type: jskArray, prefixItems: prefixItems, items: falseJsf().some)
   of tkObject:
     let properties = typeobj.fields.map(
       proc (field: TypeField): (string, JsonSchema) = (field.name, field.type.toJsonSchema)
     ).toTable.some
-    JsonSchema(type: jskObject, properties: properties)
+    let required = typeobj.fields.map(proc (field: TypeField): string = field.name).some
+    JsonSchema(type: jskObject, properties: properties, additionalProperties: falseJsf().some, required: required)
   of tkOptional:
     JsonSchema(type: jskAnyOf, anyOf: @[typeobj.inner[].toJsonSchema, JsonSchema(type: jskNull)])
   of tkSeq:
-    let items = new JsonSchema
-    items[] = typeobj.item[].toJsonSchema
-    JsonSchema(type: jskArray, items: items.some)
+    let items = newJsf(typeobj.item[].toJsonSchema).some
+    JsonSchema(type: jskArray, items: items)
   of tkTable:
     doAssert typeobj.key[].kind == tkString, "JSON Schema table keys can only be strings"
-    let properties = new JsonSchema
-    properties[] = typeobj.value[].toJsonSchema
-    let additionalProperties = JsonSchemaAdditionalProperties(properties: properties).some
+    let additionalProperties = newJsf(typeobj.value[].toJsonSchema).some
     JsonSchema(type: jskObject, additionalProperties: additionalProperties)
   else:
     # FIXME: error out instead?
@@ -122,19 +140,19 @@ func toJsonSchema*(typeobj: TypeObj): JsonSchema =
 
 import jsony
 
-proc parseHook*(s: string, i: var int, v: var Option[JsonSchemaAdditionalProperties]) =
+proc parseHook*(s: string, i: var int, v: var JsonSchemaOrFalse) =
   let startI = i
   var maybeFalse = false
   s.parseHook(i, maybeFalse)
   if i != startI:
-    v = JsonSchemaAdditionalProperties.none
+    v = falseJsf()
   else:
     i = startI
-    v = JsonSchemaAdditionalProperties.default.some
-    s.parseHook(i, v.get)
+    v = newJsf(JsonSchema())
+    s.parseHook(i, v.schema)
 
-proc dumpHook*(s: var string, v: Option[JsonSchemaAdditionalProperties]) =
-  if v.isSome:
-    s.dumpHook v.get
-  else:
+proc dumpHook*(s: var string, v: JsonSchemaOrFalse) =
+  if v.isFalse:
     s.dumpHook false
+  else:
+    s.dumpHook v.schema
