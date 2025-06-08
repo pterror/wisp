@@ -130,6 +130,9 @@ func toJsonSchema*(typeobj: TypeObj): JsonSchema =
   of tkSeq:
     let items = newJsf(typeobj.item[].toJsonSchema).some
     JsonSchema(type: jskArray, items: items)
+  of tkArray:
+    let items = newJsf(typeobj.arrayItem[].toJsonSchema).some
+    JsonSchema(type: jskArray, items: items, minItems: typeobj.len.some, maxItems: typeobj.len.some)
   of tkTable:
     doAssert typeobj.key[].kind == tkString, "JSON Schema table keys can only be strings"
     let additionalProperties = newJsf(typeobj.value[].toJsonSchema).some

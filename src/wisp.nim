@@ -36,7 +36,12 @@ proc main*() {.async.} =
       await sleepAsync(10)
 
 if isMainModule:
+  echo $typeobjof(Server)
   echo typeobjof(Server).base[].toJson
   echo typeobjof(Server).toJsonSchema.toJson
   echo typeobjof(Table[string, int]).toJsonSchema.toJson
+  echo $typeobjof(Table[string, int])
+  echo typeobjof(array[5, string]).toJsonSchema.toJson
+  echo $typeobjof(array[5, string])
+  echo $typeobjof((string, float64, string, int, int32))
   waitFor main()
