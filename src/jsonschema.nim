@@ -1,5 +1,7 @@
-import std/options, std/sequtils, std/tables
+import std/assertions, std/options, std/sequtils, std/tables
 import jsonvalue, typeobj
+
+# TODO: Support `enum`s
 
 type
   JsonSchemaKind* = enum
@@ -18,6 +20,8 @@ type
     jskNot
 
   JsonSchema* = object
+    # FIXME: `type` conflicts with the (deprecated) operator's name - but this is difficult
+    # to change without support for parse-side `renameHook` (which can be implemented!).
     case `type`*: JsonSchemaKind
     of jskInteger, jskNumber:
       multipleOf*: Option[float]
@@ -36,6 +40,7 @@ type
     of jskObject:
       properties*: Option[Table[string, JsonSchema]]
       patternProperties*: Option[Table[string, JsonSchema]]
+      additionalProperties*: Option[JsonSchemaAdditionalProperties]
     of jskEnum:
       `enum`*: seq[JsonValue]
     of jskConst:
@@ -47,19 +52,22 @@ type
     of jskOneOf:
       oneOf*: seq[JsonSchema]
     of jskNot:
-      `not`: ref JsonSchema
+      `not`*: ref JsonSchema
     else:
       discard
+  
+  JsonSchemaAdditionalProperties = object
+    properties: ref JsonSchema
 
-proc skipHook*[U: Option[auto]](T: typedesc[JsonSchema], v: U, key: string): bool =
+func skipHook*[U: Option[auto]](T: typedesc[JsonSchema], v: U, key: string): bool =
   v.isNone
 
-proc skipHook*(T: typedesc[JsonSchema], v: JsonSchemaKind, key: string): bool =
+func skipHook*(T: typedesc[JsonSchema], v: JsonSchemaKind, key: string): bool =
   if key != "type":
     return false
   return v == jskAnyOf or v == jskAllOf or v == jskOneOf or v == jskNot
 
-proc `$`*(v: JsonSchemaKind): string =
+func `$`*(v: JsonSchemaKind): string =
   case v:
   of jskNull: "null"
   of jskBoolean: "boolean"
@@ -96,12 +104,37 @@ func toJsonSchema*(typeobj: TypeObj): JsonSchema =
       proc (field: TypeField): (string, JsonSchema) = (field.name, field.type.toJsonSchema)
     ).toTable.some
     JsonSchema(type: jskObject, properties: properties)
+  of tkOptional:
+    JsonSchema(type: jskAnyOf, anyOf: @[typeobj.inner[].toJsonSchema, JsonSchema(type: jskNull)])
   of tkSeq:
     let items = new JsonSchema
     items[] = typeobj.item[].toJsonSchema
     JsonSchema(type: jskArray, items: items.some)
-  of tkOptional:
-    JsonSchema(type: jskAnyOf, anyOf: @[typeobj.inner[].toJsonSchema, JsonSchema(type: jskNull)])
+  of tkTable:
+    doAssert typeobj.key[].kind == tkString, "JSON Schema table keys can only be strings"
+    let properties = new JsonSchema
+    properties[] = typeobj.value[].toJsonSchema
+    let additionalProperties = JsonSchemaAdditionalProperties(properties: properties).some
+    JsonSchema(type: jskObject, additionalProperties: additionalProperties)
   else:
     # FIXME: error out instead?
     JsonSchema(type: jskNull)
+
+import jsony
+
+proc parseHook*(s: string, i: var int, v: var Option[JsonSchemaAdditionalProperties]) =
+  let startI = i
+  var maybeFalse = false
+  s.parseHook(i, maybeFalse)
+  if i != startI:
+    v = JsonSchemaAdditionalProperties.none
+  else:
+    i = startI
+    v = JsonSchemaAdditionalProperties.default.some
+    s.parseHook(i, v.get)
+
+proc dumpHook*(s: var string, v: Option[JsonSchemaAdditionalProperties]) =
+  if v.isSome:
+    s.dumpHook v.get
+  else:
+    s.dumpHook false

@@ -1,5 +1,7 @@
 import std/options, std/tables, std/typetraits
 
+# TODO: Support `enum`s
+
 type
   TypeKind* = enum
     tkVoid
@@ -48,11 +50,11 @@ type
     name*: string
     `type`*: TypeObj
 
-proc keyTypeOfTable[K, V](t: Table[K, V]): typedesc[K] =
-  K
+proc keyTypeOfTable[K, V](t: Table[K, V]): K =
+  K.default
 
-proc valueTypeOfTable[K, V](t: Table[K, V]): typedesc[V] =
-  V
+proc valueTypeOfTable[K, V](t: Table[K, V]): V =
+  V.default
 
 func typeobjof*[T](t: typedesc[T]): TypeObj =
   let value = T.default
@@ -96,10 +98,10 @@ func typeobjof*[T](t: typedesc[T]): TypeObj =
     TypeObj(kind: tkSeq, item: typeobjof(typeof(value[0])))
   elif value is Table:
     var key = new TypeObj
-    key[] = typeobjof(value.keyTypeOfTable)
-    var value = new TypeObj
-    value[] = typeobjof(value.valueTypeOfTable)
-    TypeObj(kind: tkTable, key: key, value: value)
+    key[] = typeobjof(typeof(value.keyTypeOfTable))
+    var valueType = new TypeObj
+    valueType[] = typeobjof(typeof(value.valueTypeOfTable))
+    TypeObj(kind: tkTable, key: key, value: valueType)
   elif value is distinct:
     var baseType = new TypeObj
     baseType[] = typeobjof(t.distinctBase(false))

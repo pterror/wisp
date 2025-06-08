@@ -38,4 +38,5 @@ proc main*() {.async.} =
 if isMainModule:
   echo typeobjof(Server).base[].toJson
   echo typeobjof(Server).toJsonSchema.toJson
+  echo typeobjof(Table[string, int]).toJsonSchema.toJson
   waitFor main()
