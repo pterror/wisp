@@ -9,7 +9,7 @@ macro idType*(name) =
       $`@ name` & "(" & $n.int & ")"
     proc `==`*(a, b: `@ name`): bool {.borrow.}
 
-  if defined(debugMacros):
+  if defined(debugMacros) or defined(debugMacro_idType):
     echo "(idType macro)"
     echo result.repr
 
@@ -22,7 +22,7 @@ macro stringType*(name) =
       $`@ name` & "(" & $n.string & ")"
     proc `==`*(a, b: `@ name`): bool {.borrow.}
 
-  if defined(debugMacros):
+  if defined(debugMacros) or defined(debugMacro_stringType):
     echo "(stringType macro)"
     echo result.repr
 
@@ -101,6 +101,6 @@ macro dbTypes*(groupName, typs) =
   )
   result = nnkStmtList.newTree(stmts)
 
-  if defined(debugMacros):
+  if defined(debugMacros) or defined(debugMacro_dbTypes):
     echo "(dbTypes macro)"
     echo result.repr

@@ -1,4 +1,4 @@
-import std/typetraits
+import std/options, std/tables, std/typetraits
 
 type
   TypeKind* = enum
@@ -14,11 +14,17 @@ type
     tkUint16
     tkUint32
     tkUint64
+    tkFloat
+    tkFloat32
+    tkFloat64
     tkString
     tkDistinct
     tkRef
     tkTuple
     tkObject
+    tkOptional
+    tkSeq
+    tkTable
 
   TypeObj* = object
     case kind*: TypeKind
@@ -28,12 +34,25 @@ type
       items*: seq[TypeObj]
     of tkObject:
       fields*: seq[TypeField]
+    of tkOptional:
+      inner*: ref TypeObj
+    of tkSeq:
+      item*: ref TypeObj
+    of tkTable:
+      key*: ref TypeObj
+      value*: ref TypeObj
     else:
       discard
 
   TypeField* = object
     name*: string
-    typ*: TypeObj
+    `type`*: TypeObj
+
+proc keyTypeOfTable[K, V](t: Table[K, V]): typedesc[K] =
+  K
+
+proc valueTypeOfTable[K, V](t: Table[K, V]): typedesc[V] =
+  V
 
 func typeobjof*[T](t: typedesc[T]): TypeObj =
   let value = T.default
@@ -59,8 +78,28 @@ func typeobjof*[T](t: typedesc[T]): TypeObj =
     TypeObj(kind: tkUint32)
   elif value is uint64:
     TypeObj(kind: tkUint64)
+  elif value is float:
+    TypeObj(kind: tkFloat)
+  elif value is float32:
+    TypeObj(kind: tkFloat32)
+  elif value is float64:
+    TypeObj(kind: tkFloat64)
   elif value is string:
     TypeObj(kind: tkString)
+  elif value is Option:
+    var inner = new TypeObj
+    inner[] = typeobjof(typeof(value.get))
+    TypeObj(kind: tkOptional, inner: inner)
+  elif value is seq:
+    var item = new TypeObj
+    item[] = typeobjof(typeof(value[0]))
+    TypeObj(kind: tkSeq, item: typeobjof(typeof(value[0])))
+  elif value is Table:
+    var key = new TypeObj
+    key[] = typeobjof(value.keyTypeOfTable)
+    var value = new TypeObj
+    value[] = typeobjof(value.valueTypeOfTable)
+    TypeObj(kind: tkTable, key: key, value: value)
   elif value is distinct:
     var baseType = new TypeObj
     baseType[] = typeobjof(t.distinctBase(false))
@@ -77,7 +116,7 @@ func typeobjof*[T](t: typedesc[T]): TypeObj =
   elif value is object:
     var fields: seq[TypeField] = @[]
     for fieldName, fieldValue in value.fieldPairs:
-      fields.add(TypeField(name: fieldName, typ: typeobjof(typeof(fieldValue))))
+      fields.add(TypeField(name: fieldName, type: typeobjof(typeof(fieldValue))))
     TypeObj(kind: tkObject, fields: fields)
   else:
     # FIXME: error out instead?

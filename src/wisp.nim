@@ -1,6 +1,7 @@
 import std/asynchttpserver, std/asyncdispatch, std/json, std/strutils, std/tables
 import debby/sqlite
-import chat, http, typeobj
+import jsony
+import services/chat, http, jsonschema, typeobj
 
 proc main*() {.async.} =
   let db = openDatabase("chat.db")
@@ -13,15 +14,7 @@ proc main*() {.async.} =
     let parts = req.url.path.split('/')
     let handler = serverHandlers.getOrDefault(parts[1])
     if handler != nil:
-      var newReq = Request(
-        client: req.client,
-        reqMethod: req.reqMethod,
-        headers: req.headers,
-        protocol: req.protocol,
-        url: req.url,
-        hostname: req.hostname,
-        body: req.body,
-      )
+      var newReq = req.clone()
       newReq.url.path = "/" & parts[2 ..^ 1].join("/")
       await handler(newReq)
     else:
@@ -43,5 +36,6 @@ proc main*() {.async.} =
       await sleepAsync(10)
 
 if isMainModule:
-  echo $typeobjof(Server)
+  echo typeobjof(Server).base[].toJson
+  echo typeobjof(Server).toJsonSchema.toJson
   waitFor main()

@@ -5,13 +5,24 @@ import jsony
 type Error = object
   message: string
 
+func clone*(req: Request): Request {.gcsafe.} =
+  Request(
+    client: req.client,
+    reqMethod: req.reqMethod,
+    headers: req.headers,
+    protocol: req.protocol,
+    url: req.url,
+    hostname: req.hostname,
+    body: req.body,
+  )
+
 proc httpOkJson*[T](req: Request, value: T) {.async, gcsafe.} =
-  let headers = {"Content-Type": "application/json"}.newHttpHeaders()
-  await req.respond(Http200, value.toJson(), headers)
+  let headers = {"Content-Type": "application/json"}.newHttpHeaders
+  await req.respond(Http200, value.toJson, headers)
 
 proc httpErrorJson*(req: Request, message: string) {.async, gcsafe.} =
-  let headers = {"Content-Type": "application/json"}.newHttpHeaders()
-  await req.respond(Http400, Error(message: message).toJson(), headers)
+  let headers = {"Content-Type": "application/json"}.newHttpHeaders
+  await req.respond(Http400, Error(message: message).toJson, headers)
 
 proc httpCrud*[T: ref object](
     t: typedesc[T], db: Db
