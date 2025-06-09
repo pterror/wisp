@@ -1,4 +1,5 @@
 import std/options, std/sequtils, std/strutils, std/tables, std/typetraits
+import core
 
 # TODO: Support `enum`s
 
@@ -96,7 +97,7 @@ func `$`*(v: TypeObj): string =
     "object\n\t" & body
   of tkOptional: "Optional[" & $v.inner[] & "]"
   of tkSeq: "seq[" & $v.item[] & "]"
-  of tkArray: "seq[" & $v.len & ", " & $v.arrayItem[] & "]"
+  of tkArray: "array[" & $v.len & ", " & $v.arrayItem[] & "]"
   of tkTable: "Table[" & $v.key[] & ", " & $v.value[] & "]"
 
 func typeobjof*[T](t: typedesc[T]): TypeObj =
@@ -132,36 +133,26 @@ func typeobjof*[T](t: typedesc[T]): TypeObj =
   elif value is string:
     TypeObj(kind: tkString)
   elif value is Option:
-    var inner = new TypeObj
-    inner[] = typeobjof(typeof(value.get))
-    TypeObj(kind: tkOptional, inner: inner)
+    TypeObj(kind: tkOptional, inner: typeobjof(typeof(value.get)).toRef)
   elif value is seq:
-    var item = new TypeObj
-    item[] = typeobjof(typeof(value[0]))
-    TypeObj(kind: tkSeq, item: typeobjof(typeof(value[0])))
+    TypeObj(kind: tkSeq, item: typeobjof(typeof(value[0])).toRef)
   elif value is Table:
-    var key = new TypeObj
-    key[] = typeobjof(typeof(value.keyTypeOfTable))
-    var valueType = new TypeObj
-    valueType[] = typeobjof(typeof(value.valueTypeOfTable))
-    TypeObj(kind: tkTable, key: key, value: valueType)
+    TypeObj(
+      kind: tkTable,
+      key: typeobjof(typeof(value.keyTypeOfTable)).toRef,
+      value: typeobjof(typeof(value.valueTypeOfTable)).toRef
+    )
   elif value is distinct:
-    var baseType = new TypeObj
-    baseType[] = typeobjof(t.distinctBase(false))
-    TypeObj(kind: tkDistinct, base: baseType)
+    TypeObj(kind: tkDistinct, base: typeobjof(t.distinctBase(false)).toRef)
   elif value is ref:
-    var baseType = new TypeObj
-    baseType[] = typeobjof(typeof(value[]))
-    TypeObj(kind: tkRef, base: baseType)
+    TypeObj(kind: tkRef, base: typeobjof(typeof(value[])).toRef)
   elif value is tuple:
     var items: seq[TypeObj] = @[]
     for _, fieldValue in value.fieldPairs:
       items.add(typeobjof(typeof(fieldValue)))
     TypeObj(kind: tkTuple, items: items)
   elif value is array:
-    var arrayItem = new TypeObj
-    arrayItem[] = typeobjof(typeof(value[0]))
-    TypeObj(kind: tkArray, len: value.len, arrayItem: arrayItem)
+    TypeObj(kind: tkArray, len: value.len, arrayItem: typeobjof(typeof(value[0])).toRef)
   elif value is object:
     var fields: seq[TypeField] = @[]
     for fieldName, fieldValue in value.fieldPairs:

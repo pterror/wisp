@@ -1,5 +1,5 @@
 import std/assertions, std/options, std/sequtils, std/tables
-import jsonvalue, typeobj
+import core, jsonvalue, typeobj
 
 # TODO: Support `enum`s
 
@@ -75,9 +75,7 @@ func falseJsf*(): JsonSchemaOrFalse =
   JsonSchemaOrFalse(isFalse: true)
 
 func newJsf*(schema: JsonSchema): JsonSchemaOrFalse =
-  let newSchema = new JsonSchema
-  newSchema[] = schema
-  JsonSchemaOrFalse(schema: newSchema)
+  JsonSchemaOrFalse(schema: schema.toRef)
 
 func skipHook*[U: Option[auto]](T: typedesc[JsonSchema], v: U, key: string): bool =
   v.isNone

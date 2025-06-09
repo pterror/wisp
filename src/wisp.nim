@@ -44,4 +44,5 @@ if isMainModule:
   echo typeobjof(array[5, string]).toJsonSchema.toJson
   echo $typeobjof(array[5, string])
   echo $typeobjof((string, float64, string, int, int32))
+  echo $typeobjof(seq[string])
   waitFor main()
