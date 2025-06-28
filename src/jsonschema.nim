@@ -139,6 +139,27 @@ func toJsonSchema*(typeobj: TypeObj): JsonSchema =
     # FIXME: error out instead?
     JsonSchema(type: jskNull)
 
+# TODO: finish
+func toTypeObj*(jsonschema: JsonSchema): TypeObj =
+  case jsonschema.type:
+  of jskBoolean: TypeObj(kind: tkBool)
+  of jskInteger: TypeObj(kind: tkInt)
+  of jskNumber: TypeObj(kind: tkFloat)
+  of jskString: TypeObj(kind: tkString)
+  of jskArray: TypeObj(kind: tkArray)
+  of jskObject: TypeObj(kind: tkObject)
+  of jskAnyOf:
+    if jsonschema.anyOf.len == 2 and jsonschema.anyOf[1].type == jskNull:
+      TypeObj(kind: tkOptional)
+    else:
+      # FIXME: better error handling
+  of jskNull, jskEnum, jskConst, jskAnyOf, jskAllOf, jskOneOf, jskNot:
+    # FIXME: implement
+    TypeObj(kind: tkVoid)
+  else:
+    # FIXME: error out instead?
+    TypeObj(kind: tkVoid)
+
 import jsony
 
 proc parseHook*(s: string, i: var int, v: var JsonSchemaOrFalse) =

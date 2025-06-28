@@ -24,7 +24,7 @@ proc main*() {.async.} =
     if not db.tableExists(t):
       db.createTable(t)
     db.checkTable(t)
-    serverHandlers[($type(t)).toSnakeCase()] = httpCrud(t, db)
+    serverHandlers[($type(t)).toSnakeCase] = httpCrud(t, db)
 
   registerChatTypes(register)
 
@@ -36,13 +36,14 @@ proc main*() {.async.} =
       await sleepAsync(10)
 
 if isMainModule:
-  echo $typeobjof(Server)
-  echo typeobjof(Server).base[].toJson
-  echo typeobjof(Server).toJsonSchema.toJson
-  echo typeobjof(Table[string, int]).toJsonSchema.toJson
-  echo $typeobjof(Table[string, int])
-  echo typeobjof(array[5, string]).toJsonSchema.toJson
-  echo $typeobjof(array[5, string])
-  echo $typeobjof((string, float64, string, int, int32))
-  echo $typeobjof(seq[string])
+  echo $Server.toTypeObj
+  echo Server.toTypeObj.base[].toJson
+  echo Server.toTypeObj.toJsonSchema.toJson
+  echo Table[string, int].toTypeObj.toJsonSchema.toJson
+  echo Table[string, int].toTypeObj.toJsonSchema.toJson.fromJson(JsonSchema).toTypeObj
+  echo $Table[string, int].toTypeObj
+  echo array[5, string].toTypeObj.toJsonSchema.toJson
+  echo $array[5, string].toTypeObj
+  echo $(string, float64, string, int, int32).toTypeObj
+  echo $seq[string].toTypeObj
   waitFor main()

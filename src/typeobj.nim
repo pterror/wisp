@@ -100,7 +100,7 @@ func `$`*(v: TypeObj): string =
   of tkArray: "array[" & $v.len & ", " & $v.arrayItem[] & "]"
   of tkTable: "Table[" & $v.key[] & ", " & $v.value[] & "]"
 
-func typeobjof*[T](t: typedesc[T]): TypeObj =
+func toTypeObj*[T](t: typedesc[T]): TypeObj =
   let value = T.default
   when value is bool:
     TypeObj(kind: tkBool)
@@ -133,30 +133,30 @@ func typeobjof*[T](t: typedesc[T]): TypeObj =
   elif value is string:
     TypeObj(kind: tkString)
   elif value is Option:
-    TypeObj(kind: tkOptional, inner: typeobjof(typeof(value.get)).toRef)
+    TypeObj(kind: tkOptional, inner: typeof(value.get).toTypeObj.toRef)
   elif value is seq:
-    TypeObj(kind: tkSeq, item: typeobjof(typeof(value[0])).toRef)
+    TypeObj(kind: tkSeq, item: typeof(value[0]).toTypeObj.toRef)
   elif value is Table:
     TypeObj(
       kind: tkTable,
-      key: typeobjof(typeof(value.keyTypeOfTable)).toRef,
-      value: typeobjof(typeof(value.valueTypeOfTable)).toRef
+      key: typeof(value.keyTypeOfTable).toTypeObj.toRef,
+      value: typeof(value.valueTypeOfTable).toTypeObj.toRef
     )
   elif value is distinct:
-    TypeObj(kind: tkDistinct, base: typeobjof(t.distinctBase(false)).toRef)
+    TypeObj(kind: tkDistinct, base: t.distinctBase(false).toTypeObj.toRef)
   elif value is ref:
-    TypeObj(kind: tkRef, base: typeobjof(typeof(value[])).toRef)
+    TypeObj(kind: tkRef, base: typeof(value[]).toTypeObj.toRef)
   elif value is tuple:
     var items: seq[TypeObj] = @[]
     for _, fieldValue in value.fieldPairs:
-      items.add(typeobjof(typeof(fieldValue)))
+      items.add(typeof(fieldValue).toTypeObj)
     TypeObj(kind: tkTuple, items: items)
   elif value is array:
-    TypeObj(kind: tkArray, len: value.len, arrayItem: typeobjof(typeof(value[0])).toRef)
+    TypeObj(kind: tkArray, len: value.len, arrayItem: typeof(value[0]).toTypeObj.toRef)
   elif value is object:
     var fields: seq[TypeField] = @[]
     for fieldName, fieldValue in value.fieldPairs:
-      fields.add(TypeField(name: fieldName, type: typeobjof(typeof(fieldValue))))
+      fields.add(TypeField(name: fieldName, type: typeof(fieldValue).toTypeObj))
     TypeObj(kind: tkObject, fields: fields)
   else:
     # FIXME: error out instead?
