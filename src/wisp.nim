@@ -40,7 +40,7 @@ if isMainModule:
   echo Server.toTypeObj.base[].toJson
   echo Server.toTypeObj.toJsonSchema.toJson
   echo Table[string, int].toTypeObj.toJsonSchema.toJson
-  echo Table[string, int].toTypeObj.toJsonSchema.toJson.fromJson(JsonSchema).toTypeObj
+  # echo Table[string, int].toTypeObj.toJsonSchema.toJson.fromJson(JsonSchema).toTypeObj
   echo $Table[string, int].toTypeObj
   echo array[5, string].toTypeObj.toJsonSchema.toJson
   echo $array[5, string].toTypeObj

@@ -1,3 +1,5 @@
 .direnv/
 wisp
 *.db
+nimble.develop
+nimble.paths

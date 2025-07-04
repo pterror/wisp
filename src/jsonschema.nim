@@ -1,24 +1,26 @@
 import std/assertions, std/options, std/sequtils, std/tables
-import core, jsonvalue, typeobj
+import core, jsony, jsonvalue, typeobj, types
 
 # TODO: Support `enum`s
 
-type
-  JsonSchemaKind* = enum
-    jskNull
-    jskBoolean
-    jskInteger
-    jskNumber
-    jskString
-    jskArray
-    jskObject
-    jskEnum
-    jskConst
-    jskAnyOf
-    jskAllOf
-    jskOneOf
-    jskNot
+enumTypes:
+  type
+    JsonSchemaKind* = enum
+      jskNull
+      jskBoolean
+      jskInteger
+      jskNumber
+      jskString
+      jskArray
+      jskObject
+      jskEnum
+      jskConst
+      jskAnyOf
+      jskAllOf
+      jskOneOf
+      jskNot
 
+type
   JsonSchema* = object
     unevaluatedProperties*: Option[JsonSchemaOrFalse]
     unevaluatedItems*: Option[JsonSchemaOrFalse]
@@ -85,23 +87,6 @@ func skipHook*(T: typedesc[JsonSchema], v: JsonSchemaKind, key: string): bool =
     return false
   return v == jskAnyOf or v == jskAllOf or v == jskOneOf or v == jskNot
 
-func `$`*(v: JsonSchemaKind): string =
-  case v:
-  of jskNull: "null"
-  of jskBoolean: "boolean"
-  of jskInteger: "integer"
-  of jskNumber: "number"
-  of jskString: "string"
-  of jskArray: "array"
-  of jskObject: "object"
-  of jskEnum: "enum"
-  of jskConst: "const"
-  # These should never be serialized as the `type` field. See the second `skipHook` overload above.
-  of jskAnyOf: "anyOf"
-  of jskAllOf: "allOf"
-  of jskOneOf: "oneOf"
-  of jskNot: "not" 
-
 func toJsonSchema*(typeobj: TypeObj): JsonSchema =
   case typeobj.kind:
   of tkInt, tkInt8, tkInt16, tkInt32, tkInt64, tkUint, tkUint8, tkUint16, tkUint32, tkUint64:
@@ -153,14 +138,10 @@ func toTypeObj*(jsonschema: JsonSchema): TypeObj =
       TypeObj(kind: tkOptional)
     else:
       # FIXME: better error handling
-  of jskNull, jskEnum, jskConst, jskAnyOf, jskAllOf, jskOneOf, jskNot:
+      TypeObj(kind: tkVoid)
+  of jskNull, jskEnum, jskConst, jskAllOf, jskOneOf, jskNot:
     # FIXME: implement
     TypeObj(kind: tkVoid)
-  else:
-    # FIXME: error out instead?
-    TypeObj(kind: tkVoid)
-
-import jsony
 
 proc parseHook*(s: string, i: var int, v: var JsonSchemaOrFalse) =
   let startI = i
