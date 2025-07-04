@@ -104,7 +104,6 @@ macro enumTypes*(types) =
           typ[0].expectKind nnkPostfix
           typ[0][1]
       name.expectKind nnkIdent
-      echo "whuh ", $name
       let enm = typ[2]
       enm.expectKind nnkEnumTy
 

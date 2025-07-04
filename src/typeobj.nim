@@ -1,5 +1,5 @@
 import std/options, std/sequtils, std/strutils, std/tables, std/typetraits
-import core, types
+import core
 
 # TODO: Support `enum`s
 

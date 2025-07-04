@@ -1,69 +1,61 @@
-import std/asyncdispatch, std/asynchttpserver, std/strutils
+import std/strutils
 import debby/sqlite
 import jsony
+import mummy
 
 type Error = object
   message: string
 
-func clone*(req: Request): Request {.gcsafe.} =
-  Request(
-    client: req.client,
-    reqMethod: req.reqMethod,
-    headers: req.headers,
-    protocol: req.protocol,
-    url: req.url,
-    hostname: req.hostname,
-    body: req.body,
-  )
+proc httpOkJson*[T](req: Request, value: T) {.gcsafe.} =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "application/json"
+  req.respond(200, headers, value.toJson)
 
-proc httpOkJson*[T](req: Request, value: T) {.async, gcsafe.} =
-  let headers = {"Content-Type": "application/json"}.newHttpHeaders
-  await req.respond(Http200, value.toJson, headers)
-
-proc httpErrorJson*(req: Request, message: string) {.async, gcsafe.} =
-  let headers = {"Content-Type": "application/json"}.newHttpHeaders
-  await req.respond(Http400, Error(message: message).toJson, headers)
+proc httpErrorJson*(req: Request, message: string) {.gcsafe.} =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "application/json"
+  req.respond(400, headers, Error(message: message).toJson)
 
 proc httpCrud*[T: ref object](
     t: typedesc[T], db: Db
-): proc(req: Request): Future[void] {.gcsafe.} =
-  proc(req: Request) {.async, gcsafe.} =
-    if req.url.path == "/":
-      case req.reqMethod
-      of HttpPost:
+): proc(req: Request): void {.gcsafe.} =
+  proc(req: Request) {.gcsafe.} =
+    if req.path == "/":
+      case req.httpMethod
+      of "POST":
         # new object
         db.insert(req.body.fromJson(T))
-        await req.httpOkJson(nil)
-      of HttpGet:
+        req.httpOkJson(nil)
+      of "GET":
         # list objects
         # TODO: read query params from URL search params
         let output = db.filter(t)
-        await req.httpOkJson(output)
+        req.httpOkJson(output)
       else:
-        await req.httpErrorJson("Unsupported method '" & $req.reqMethod & "'")
+        req.httpErrorJson("Unsupported method '" & $req.httpMethod & "'")
     else:
       let obj = T()
-      let id = typeof(obj.id)(req.url.path[1 ..^ 1].parseInt)
-      case req.reqMethod
-      of HttpGet:
+      let id = typeof(obj.id)(req.path[1 ..^ 1].parseInt)
+      case req.httpMethod
+      of "GET":
         # get object
         let output = db.get(t, id)
-        await req.httpOkJson(output)
-      of HttpPut:
+        req.httpOkJson(output)
+      of "PUT":
         # update object
         var value = req.body.fromJson(T)
         if value.id.int != 0 and value.id != id:
-          await req.httpErrorJson("Object id must be '" & $id & "'")
+          req.httpErrorJson("Object id must be '" & $id & "'")
           return
         value.id = id
         db.update(value)
-        await req.httpOkJson(nil)
-      of HttpDelete:
+        req.httpOkJson(nil)
+      of "DELETE":
         # delete object
         let affectedRows = db.delete(t, id)
         if affectedRows <= 0:
-          await req.httpErrorJson("Object with id '" & $id & "' not found")
+          req.httpErrorJson("Object with id '" & $id & "' not found")
           return
-        await req.httpOkJson(nil)
+        req.httpOkJson(nil)
       else:
-        await req.httpErrorJson("Unsupported method '" & $req.reqMethod & "'")
+        req.httpErrorJson("Unsupported method '" & $req.httpMethod & "'")
