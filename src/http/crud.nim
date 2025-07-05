@@ -2,21 +2,9 @@ import std/strutils
 import debby/sqlite
 import jsony
 import mummy
+import core
 
-type Error = object
-  message: string
-
-proc httpOkJson*[T](req: Request, value: T) {.gcsafe.} =
-  var headers: HttpHeaders
-  headers["Content-Type"] = "application/json"
-  req.respond(200, headers, value.toJson)
-
-proc httpErrorJson*(req: Request, message: string) {.gcsafe.} =
-  var headers: HttpHeaders
-  headers["Content-Type"] = "application/json"
-  req.respond(400, headers, Error(message: message).toJson)
-
-proc httpCrud*[T: ref object](
+proc httpCrud*[T: object | ref object](
     t: typedesc[T], db: Db
 ): proc(req: Request): void {.gcsafe.} =
   proc(req: Request) {.gcsafe.} =

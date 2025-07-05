@@ -1,8 +1,8 @@
-import std/options, std/macros, ../types
+import std/options, std/macros, ../../types
 
 stringType Url
 
-dbTypes(Chat):
+dbTypes(BasicChat):
   type
     Entity* = ref object
       name*: string
@@ -18,17 +18,9 @@ dbTypes(Chat):
       icon*: Option[Url]
 
     Message* = ref object
-      entityId*: EntityId
+      authorId*: EntityId
       channelId*: ChannelId
       content*: string
-
-    Emoji* = ref object
-      serverId*: ServerId
-
-    Reaction* = ref object
-      messageId*: MessageId
-      entityId: EntityId
-      emojiId*: EmojiId
 
     Role* = ref object
       serverId*: ServerId
