@@ -3,3 +3,4 @@ wisp
 *.db
 nimble.develop
 nimble.paths
+src/**/*.js

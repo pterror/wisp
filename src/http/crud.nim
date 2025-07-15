@@ -2,7 +2,7 @@ import std/strutils
 import debby/sqlite
 import jsony
 import mummy
-import core
+import ./core
 
 proc httpCrud*[T: object | ref object](
     t: typedesc[T], db: Db

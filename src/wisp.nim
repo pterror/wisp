@@ -1,7 +1,7 @@
 import std/tables
 import debby/sqlite
 import mummy
-import services/chat/types, http/crud, http/routers
+import ./services/chat/types, ./http/crud, ./http/routers
 
 proc runWisp*() =
   let db = openDatabase("chat.db")

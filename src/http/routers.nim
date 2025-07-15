@@ -1,6 +1,6 @@
 import std/strutils, std/tables
 import mummy
-import core
+import ./core
 
 type
   PathRouter* = object

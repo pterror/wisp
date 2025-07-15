@@ -17,6 +17,7 @@
               nimlangserver
               nimble
               nph
+              terser
             ];
             buildInputs = with pkgs; [
               sqlite

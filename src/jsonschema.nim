@@ -1,5 +1,6 @@
 import std/assertions, std/options, std/sequtils, std/tables
-import core, jsony, jsonvalue, typeobj, types
+import jsony
+import ./core, ./jsonvalue, ./typeobj, ./types
 
 # TODO: Support `enum`s
 
