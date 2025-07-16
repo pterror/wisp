@@ -18,6 +18,8 @@
               nimble
               nph
               terser
+              nodejs
+              corepack
             ];
             buildInputs = with pkgs; [
               sqlite
