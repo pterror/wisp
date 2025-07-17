@@ -20,6 +20,8 @@
               terser
               nodejs
               corepack
+              curl
+              jq
             ];
             buildInputs = with pkgs; [
               sqlite
